@@ -12,7 +12,8 @@ start:
     mov ax, data
     mov ds, ax
     
-    
+    ;testare branch
+
     mov ax, 4c00h
     int 21h
 
