@@ -15,8 +15,8 @@ data segment
     sir_octeti      db 20 dup(0)          
     lungime_sir     db 0                 
 
+    cuvant_C        dw 0    ; Variabila C (word 16 biti)
 
-    ;ionut
     ;rares
     
 data ends
@@ -35,9 +35,9 @@ start:
 
 
      call CITIRE_DATE      ; luci
-    ; call CALCUL_C         ; ionut
+     call CALCUL_C         ; ionut
     ; call SORTARE_AFISARE  ; rares
-    ; call ROTIRE_SIR       ; ionut
+     call ROTIRE_SIR       ; ionut
 
     mov ax, 4c00h
     int 21h
@@ -142,6 +142,88 @@ IS_D:
     sub al, '0'
     ret
 HEX_TO_VAL endp
+
+
+CALCUL_C proc near
+    ; PAS 1: Bitii 0-3 (XOR capete)
+    xor ax, ax
+    lea si, sir_octeti
+    mov al, [si]            ; Primul octet
+    shr al, 4
+    xor bx, bx
+    mov bl, lungime_sir
+    dec bx
+    mov dl, [si+bx]         ; Ultimul octet
+    and dl, 0Fh
+    xor al, dl
+    and al, 0Fh
+    mov cuvant_C, ax
+
+    ; PAS 2: Bitii 4-7 (OR intre bitii 2-5)
+    xor dx, dx
+    xor cx, cx
+    mov cl, lungime_sir
+    lea si, sir_octeti
+L_OR:
+    mov al, [si]
+    and al, 00111100b       ; Masca 3Ch (bitii 2-5)
+    or dl, al
+    inc si
+    loop L_OR
+
+    shl dl, 2               ; Mutam pe pozitia 4-7
+    and dx, 00F0h
+    or cuvant_C, dx
+
+    ; PAS 3: Bitii 8-15 (Suma mod 256)
+    xor ax, ax
+    xor cx, cx
+    mov cl, lungime_sir
+    lea si, sir_octeti
+L_SUM:
+    xor bx, bx
+    mov bl, [si]
+    add ax, bx
+    inc si
+    loop L_SUM
+
+    mov ah, al              ; Suma mod 256 in AH
+    mov al, 0
+    or cuvant_C, ax
+    ret
+CALCUL_C endp
+
+ROTIRE_SIR proc near
+    ; Rotire cu N = suma primilor 2 biti
+    xor cx, cx
+    mov cl, lungime_sir
+    lea si, sir_octeti
+ROT_L:
+    mov al, [si]
+    mov bl, al
+    and bl, 3               ; Doar ultimii 2 biti
+    xor dh, dh
+    test bl, 1
+    jz CHK_2
+    inc dh
+CHK_2:
+    test bl, 2
+    jz DO_R
+    inc dh
+DO_R:
+    cmp dh, 0
+    je NXT_R
+    push cx                 ; Salvam CX loop
+    mov cl, dh              ; N in CL
+    rol al, cl              ; Rotire stanga
+    pop cx
+    mov [si], al
+NXT_R:
+    inc si
+    loop ROT_L
+    ret
+ROTIRE_SIR endp
+
 
  
 
