@@ -372,7 +372,7 @@ NO_RES:
     ret
 GASIRE_MAX_BITI endp
 
-; --- HELPERE AFISARE ---
+
 PRINT_SIR proc near
     xor cx, cx
     mov cl, lungime_sir
